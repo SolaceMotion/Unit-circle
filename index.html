@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    
+    const canvas = document.getElementsByTagName('canvas')[0];
+    canvas.height = 800
+    canvas.width = 800
+    const ctx = canvas.getContext('2d');
+    
+    let midx = 300;
+    let midy = 300;
+    let r = 150;
+
+    function Line(begin, end, stroke='black') {
+      this.begin = begin
+      this.end = end
+
+      this.draw = function() {
+        ctx.beginPath()
+        ctx.moveTo(this.begin.x, this.begin.y)
+        ctx.lineTo(this.end.x, this.end.y)
+        if (stroke) {
+          ctx.strokeStyle = stroke
+        }
+        ctx.stroke()
+        ctx.closePath()
+      }
+    }
+
+    let v = 0;
+
+    //Define ammount of steps on circle
+    let steps = 100;
+    document.addEventListener("keydown", (e) => {
+      if (e.key == "s") {
+        v+=2*Math.PI/steps
+      }
+    })
+    document.addEventListener("keydown", (e) => {
+      if (e.key == "w") {
+        v-=2*Math.PI/steps
+      }
+    })
+
+    function Hypotenuse(begin, end, stroke='black') {
+      
+      this.begin = begin
+      this.end = end
+
+      this.update = function() {
+        //Proceed from middle coordinates and add radius
+        this.end.x = midx + Math.cos(v) * r 
+        this.end.y = midy + Math.sin(v) * r
+      }
+      this.draw = function() {
+        ctx.beginPath()
+        ctx.moveTo(this.begin.x, this.begin.y)
+        ctx.lineTo(this.end.x, this.end.y)
+        
+        if (stroke) {
+          ctx.strokeStyle = stroke
+        }
+        ctx.stroke()
+        ctx.closePath()
+      }
+    }
+    
+    function vector2(x,y) {
+      return {x,y}
+    }    
+
+    function Circle(vector,r,startAngle,endAngle) {
+      this.x = vector.x;
+      this.y = vector.y;
+      this.r = r;
+
+      this.draw = function() {  
+        ctx.beginPath()
+        ctx.arc(this.x,this.y,this.r,startAngle, endAngle)
+        ctx.stroke()
+      }
+      this.updateAngle = function(v) {
+        startAngle = v;
+      }
+    }
+    
+    const circle = new Circle(vector2(midx,midy),r,0,2*Math.PI)
+    const horizontal = new Line(vector2(450,300),vector2(150,300))
+    const vertical = new Line(vector2(300,150),vector2(300,450))
+
+    const hypotenuse = new Hypotenuse(vector2(midx,midy),vector2(450,300),"red")
+    const angleArc= new Circle(vector2(midx,midy), 25, 0, 0)
+
+
+    const fps = 60;
+
+    const loop = () => {
+     const interval = setInterval(init, 1000/fps)
+    }
+
+    function init() {
+      update()
+      draw()
+    }
+
+    const update = () => {
+      hypotenuse.update()
+      angleArc.updateAngle(v)
+      
+      
+    }
+
+    const rerenderCircle =() => {
+      horizontal.draw()
+      vertical.draw()
+      circle.draw()
+
+
+    }
+
+    const draw = () => {
+      ctx.clearRect(0,0,canvas.width,canvas.height)
+      hypotenuse.draw()
+      rerenderCircle()
+      angleArc.draw()
+
+      ctx.beginPath()
+      ctx.moveTo(hypotenuse.end.x,300)
+      ctx.lineTo(hypotenuse.end.x, hypotenuse.end.y)
+      ctx.stroke()
+      ctx.closePath()
+
+      ctx.beginPath()
+      ctx.moveTo(300,hypotenuse.end.y);
+      ctx.lineTo(hypotenuse.end.x,hypotenuse.end.y)
+      ctx.stroke()
+      ctx.closePath()
+      
+
+      ctx.font = "30px Cambria"
+      ctx.fillText("π/2",275,140)
+
+      ctx.fillText("2π",455,308)
+      ctx.fillText("π",125,308)
+      ctx.fillText("3π/2",265,478)
+
+      //Write angle based on position in circle
+      ctx.fillText("v = "+ Math.abs((v > 0 ? 2*Math.PI - v : v)).toFixed(3), 450,60)
+
+      let hx = (hypotenuse.end.x * Math.cos(v)).toFixed(3)
+      if (hx <= 0) {
+        hx = (hx / 150).toFixed(3)
+      } else {
+        hx = (hx / 450).toFixed(3)
+      }
+      let hy = (-hypotenuse.end.y * Math.sin(v)).toFixed(3)
+      //Have to check greater than here because the origin of the document is in the top left
+      if (hy >= 0) hy = (hy / 150).toFixed(3)
+      else hy = (hy/450).toFixed(3)
+
+      ctx.fillText("cos(v) =" + hx, 450,100)
+      ctx.fillText("sin(v) =" + hy, 450,140)
+      ctx.fillText("tan(v) =" + (Math.sin(v) / -Math.cos(v)).toFixed(3), 450,180)
+
+
+      //Reset v back to 2 Pi once full turn is made.
+      //This can be done by switching sign in front
+      if (v >= 2*Math.PI) {
+        v = -v
+      }
+    }
+
+    loop()
+  </script>
+</body>
+</html>
